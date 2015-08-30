@@ -12,6 +12,9 @@ import android.app.AlertDialog;
 import android.app.DownloadManager;
 import android.app.DownloadManager.Request;
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -28,6 +31,7 @@ import android.webkit.WebChromeClient.CustomViewCallback;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
@@ -39,12 +43,13 @@ public class MainActivity extends Activity {
 	
 	protected AlertDialog dialog;
 	protected TextView uri;
+	protected CheckBox loadImages;
+	protected CheckBox loadScripts;
 	
 	protected WebChromeClient mClient;
 	protected View mCustomView;
 	protected CustomViewCallback mCustomViewCallback;
 	
-	@SuppressLint("SetJavaScriptEnabled")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -56,6 +61,8 @@ public class MainActivity extends Activity {
 		videoFrame = (FrameLayout) findViewById(R.id.videoFrame);
 		View prompt = getPrompt();
 		uri = (TextView)prompt.findViewById(R.id.uri);
+		loadImages = (CheckBox)prompt.findViewById(R.id.loadImages);
+		loadScripts = (CheckBox)prompt.findViewById(R.id.loadScripts);
 		
 		//---------------------webview part-----------------------//
 		mClient = new WebChromeClient(){
@@ -121,9 +128,6 @@ public class MainActivity extends Activity {
 			}
 			
 		});
-		WebSettings webSettings = myWebView.getSettings();
-		webSettings.setJavaScriptEnabled(true);
-		myWebView.loadUrl("about:blank");
 		
 		//---------------------prompt part-----------------------//
 		uri.setOnEditorActionListener(new OnEditorActionListener() {
@@ -134,7 +138,7 @@ public class MainActivity extends Activity {
 					String uriValue = uri.getText().toString();
 					
 					if(uriValue.startsWith("http://") || uriValue.startsWith("https://")){
-						myWebView.loadUrl(uriValue);
+						loadUrl(uriValue);
 					}
 					else{
 						String host = Uri.parse("http://" + uriValue).getHost();
@@ -142,7 +146,7 @@ public class MainActivity extends Activity {
 							search(uriValue);
 						}
 						else{
-							myWebView.loadUrl("http://" + uriValue);
+							loadUrl("http://" + uriValue);
 						}
 					}
 					
@@ -154,9 +158,38 @@ public class MainActivity extends Activity {
 			}
 		});
 		
+		SharedPreferences settings = getSharedPreferences("config", 0);
+		loadImages.setChecked( settings.getBoolean("loadImages", true) );
+		loadScripts.setChecked( settings.getBoolean("loadScripts", true) );
+		
 		dialog = new AlertDialog.Builder(this).setView(prompt).create();
 		dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-		dialog.show();
+		
+		//----------------start action------------------------//
+		Intent intent = getIntent();
+		if(intent.getAction().equals(Intent.ACTION_VIEW)){
+			loadUrl(intent.getDataString());
+		}
+		else{
+			dialog.show();
+		}
+	}
+	
+	@Override
+	protected void onStop() {
+		super.onStop();
+		
+		SharedPreferences prefs = getSharedPreferences("config", Context.MODE_PRIVATE);
+		Editor editor = prefs.edit();
+		editor.putBoolean("loadImages", loadImages.isChecked());
+		editor.putBoolean("loadScripts", loadScripts.isChecked());
+		editor.commit();
+	}
+	
+	protected void onNewIntent (Intent intent){
+		if(intent.getAction().equals(Intent.ACTION_VIEW)){
+			loadUrl(intent.getDataString());
+		}
 	}
 	
 	@Override
@@ -170,23 +203,19 @@ public class MainActivity extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.action_back:
-			
 			if(myWebView.canGoBack())
 			{
 				myWebView.goBack();
 			}
-			
 			return true;
 		case R.id.action_forward:
-			
 			if(myWebView.canGoForward())
 			{
 				myWebView.goForward();
 			}
-			
 			return true;
 		case R.id.action_exit:
-			myWebView.loadUrl("about:blank");
+			loadUrl("about:blank");
 			
 			this.finish();
 			
@@ -197,10 +226,11 @@ public class MainActivity extends Activity {
 			
 			return true;
 		case R.id.action_load:
-			
 			String currentUrl = myWebView.getUrl();
-			if( currentUrl.startsWith("http://") || currentUrl.startsWith("https://") ){
-				uri.setText(currentUrl);
+			if(currentUrl!=null){
+				if( currentUrl.startsWith("http://") || currentUrl.startsWith("https://") ){
+					uri.setText(currentUrl);
+				}
 			}
 			
 			dialog.show();
@@ -239,12 +269,36 @@ public class MainActivity extends Activity {
 			e.printStackTrace();
 		}
 		if(keywords!=null){
-			myWebView.loadUrl("https://www.google.com/search?q=" + keywords);
+			loadUrl("https://www.google.com/search?q=" + keywords);
 		}
 	}
 	
 	@SuppressLint("InflateParams")
 	private View getPrompt(){
 		return getLayoutInflater().inflate(R.layout.prompt, null);
+	}
+	
+	@SuppressLint("SetJavaScriptEnabled")
+	protected void loadUrl(String url){
+		if(!url.equals("about:blank")){
+			WebSettings webSettings = myWebView.getSettings();
+			if(loadScripts.isChecked()){
+				webSettings.setJavaScriptEnabled(true);
+			}
+			else
+			{
+				webSettings.setJavaScriptEnabled(false);
+			}
+			
+			if(loadImages.isChecked()){
+				webSettings.setBlockNetworkImage(false);
+			}
+			else
+			{
+				webSettings.setBlockNetworkImage(true);
+			}
+		}
+		
+		myWebView.loadUrl(url);
 	}
 }

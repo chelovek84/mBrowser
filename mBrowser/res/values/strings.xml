@@ -6,4 +6,6 @@
     <string name="action_exit">Exit</string>
     <string name="action_reload">Reload</string>
     <string name="action_load">Load</string>
+    <string name="loadImages">Images</string>
+    <string name="loadScripts">Scripts</string>
 </resources>
