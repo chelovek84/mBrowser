@@ -1,13 +1,16 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
+        android:id="@+id/action_exit"
+        android:title="@string/action_exit"/>
+    <item
         android:id="@+id/action_back"
         android:title="@string/action_back"/>
     <item
         android:id="@+id/action_forward"
         android:title="@string/action_forward"/>
     <item
-        android:id="@+id/action_exit"
-        android:title="@string/action_exit"/>
+        android:id="@+id/action_send"
+        android:title="@string/action_send"/>
     <item
         android:id="@+id/action_reload"
         android:title="@string/action_reload"/>

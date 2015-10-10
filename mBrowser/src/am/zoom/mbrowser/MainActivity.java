@@ -110,6 +110,20 @@ public class MainActivity extends Activity {
 				
 				super.onPageStarted(view, url, favicon);
 			}
+			
+			@Override
+			public boolean shouldOverrideUrlLoading(WebView view, String url) {
+				if(url.startsWith("http://") || url.startsWith("https://")){
+					return false;
+				}
+				else{
+					Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+					
+					startActivity( Intent.createChooser(i, getResources().getString(R.string.complete_action_using)) );
+					
+					return true;
+				}
+			}
 		});
 		myWebView.setWebChromeClient(mClient);
 		myWebView.setDownloadListener(new DownloadListener() {
@@ -202,6 +216,12 @@ public class MainActivity extends Activity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
+		case R.id.action_exit:
+			loadUrl("about:blank");
+			
+			this.finish();
+			
+			return true;
 		case R.id.action_back:
 			if(myWebView.canGoBack())
 			{
@@ -214,10 +234,15 @@ public class MainActivity extends Activity {
 				myWebView.goForward();
 			}
 			return true;
-		case R.id.action_exit:
-			loadUrl("about:blank");
-			
-			this.finish();
+		case R.id.action_send:
+			String sendUrl = myWebView.getUrl();
+			if(sendUrl!=null && !sendUrl.equals("about:blank")){
+				Intent i = new Intent(Intent.ACTION_SEND);
+				i.setType("text/plain");
+				i.putExtra(Intent.EXTRA_TEXT, sendUrl);
+				
+				startActivity( Intent.createChooser(i, getResources().getString(R.string.share_url)) );
+			}
 			
 			return true;
 		case R.id.action_reload:
@@ -227,10 +252,8 @@ public class MainActivity extends Activity {
 			return true;
 		case R.id.action_load:
 			String currentUrl = myWebView.getUrl();
-			if(currentUrl!=null){
-				if( currentUrl.startsWith("http://") || currentUrl.startsWith("https://") ){
-					uri.setText(currentUrl);
-				}
+			if(currentUrl!=null && !currentUrl.equals("about:blank")){
+				uri.setText(currentUrl);
 			}
 			
 			dialog.show();

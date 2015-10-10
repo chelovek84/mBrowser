@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">mBrowser</string>
+    <string name="action_exit">Exit</string>
     <string name="action_back">◀</string>
     <string name="action_forward">▶</string>
-    <string name="action_exit">Exit</string>
+    <string name="action_send">Send</string>
     <string name="action_reload">Reload</string>
     <string name="action_load">Load</string>
     <string name="loadImages">Images</string>
     <string name="loadScripts">Scripts</string>
+    <string name="share_url">Share URL</string>
+    <string name="complete_action_using">Complete action using</string>
 </resources>
